@@ -58,7 +58,8 @@ y = train['productivity']
 X = sm.add_constant(X) # 절편 포함
 
 model = sm.OLS(y, X).fit()
-# print(model.summary())
+print(model.summary())
+print(model.params)
 
 # 회귀계수(coef) 확인(가장 높은 변수): hours(근무 시간)
 coefficients = model.params[1:]
