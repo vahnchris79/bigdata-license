@@ -74,7 +74,7 @@ max_species = df.groupby('species')['body_mass_g'].mean().idxmax()
 # 품종의 sex이 Female인 표본개수는
 A = len(df.loc[(df['species']==min_species)&(df['sex']=='Female')])
 B = len(df.loc[(df['species']==max_species)&(df['sex']=='Female')])
-print(A+B) # 131
+# print(A+B) # 131
 
 # bill_length_mm기준으로 상위20%와 하위10%에 해당하는 개체들의 body_mass_g의 평균값을 각각 구한 뒤,
 # 이 두 평균값의 차이를 구하면?
@@ -87,7 +87,7 @@ df = df.dropna(axis=0)
 # bill_length_mm기준으로 상위20%에 해당하는 개체들의 body_mass_g의 평균값
 upper_mean = df[df['bill_length_mm'] >= df['bill_length_mm'].quantile(0.8)]['body_mass_g'].mean()
 lower_mean = df[df['bill_length_mm'] <= df['bill_length_mm'].quantile(0.1)]['body_mass_g'].mean()
-print(round(upper_mean - lower_mean, 3)) # 1262.879
+# print(round(upper_mean - lower_mean, 3)) # 1262.879
 
 # 작업형 제2유형
 # Bank Marketing 데이터셋
@@ -210,24 +210,25 @@ df = pd.read_csv(path + "wine01.csv")
 # print(df.info())
 from statsmodels.api import GLM, families
 formula = 'wine_variety ~ alcohol + color_intensity + proline + flavanoids + malic_acid'
-model = GLM.from_formula(formula, df).fit()
+# model = GLM.from_formula(formula, df).fit()
+model = GLM.from_formula(formula, df, family=families.Binomial()).fit()
 # print(model.summary())
 
 # 1-3) 모델의 로그-우도를 반올림하여 소수점 아래 3자리까지 출력
-# print(round(model.llf, 3)) # 15.602
+# print(round(model.llf, 3)) # -3.206
 
 # 1-4) 잔차이탈도를 반올림하여 소수점 아래 3자리까지 출력
-# print(round(model.deviance, 3)) # 5.987
+# print(round(model.deviance, 3)) # 6.411
 
 # 1-5) 'proline'을 독립변수로 하였을 때 오즈비는?
 # 반올림하여 소수점 아래 3자리까지 출력
 import numpy as np
-# print(round(np.exp(model.params['proline']), 3)) # 0.999
+# print(round(np.exp(model.params['proline']), 3)) # 0.975
 
 # 1-6) 'proline'가 3 증가하면 오즈는 몇 % 감소 또는 증가하는가?
 odds_ratio = np.exp(model.params['proline'] * 3) # 오즈비가 1보다 작음
 decrease = round((1 - odds_ratio) * 100, 2)
-# print(decrease) # 0.21
+# print(decrease) # 7.450
 
 # 1-7) 아래의 sample을 사용하여 P(Y=1)에 대한 확률을 구하고,
 # 반올림하여 소수점 아래 3자리까지 출력하시오
@@ -235,17 +236,18 @@ sample = {'alcohol': [13.5], 'color_intensity': [5.0],
           'proline': [450],  'flavanoids': [2.8], 
           'malic_acid': [1.8]}
 data = pd.DataFrame(sample)
-# print(round(model.predict(data)[0], 3)) # 0.650
+# print(round(model.predict(data)[0], 3)) # 0.659
 
 # 1-8) 위 샘플에 대한 odds를 구하고, 반올림하여 소수점 아래 4자리까지 출력하시오
 p_y1 = model.predict(data)[0]
 p_y0 = 1 - p_y1
 odds = p_y1 / p_y0
-# print(round(odds, 4)) # 1.8537
+# print(round(odds, 4)) # 1.9321
 
 # 1-9) 유의수준 5% 하에서 유의성이 낮은 변수의 개수
-res = model.pvalues[1:]<=0.05
-# print(res.sum()) # 4
+# res = model.pvalues[1:] <= 0.05
+res = model.pvalues[1:] > 0.05
+# print(res.sum()) # 5
 
 # 1-10) 아래 샘플에 대한 P(Y=1)에 대한 95% 신뢰구간의 상한은?
 # 반올림하여 소수점 아래 4자리까지 출력
@@ -255,15 +257,15 @@ sample = {'alcohol': [13.5], 'color_intensity': [5.0],
 data = pd.DataFrame(sample)
 result = model.get_prediction(data)
 # print(result.summary_frame(alpha=0.5))
-# print(round(result.conf_int(alpha=0.05)[0][1], 4)) # 0.4178
+# print(round(result.conf_int(alpha=0.05)[0][1], 4)) # 0.9904
 
 # 1-11) 정확도를 구하여 소수점 아래 3자리까지 출력
 from sklearn.metrics import accuracy_score, f1_score
 y_true = df['wine_variety']
 y_pred = model.predict(df).round().astype('int32')
 acc = accuracy_score(y_true, y_pred)
-# print(round(acc, 3)) # 0.992
+# print(round(acc, 3)) # 0.985
 
 # 1-12) f1_score를 구해 반올림하여 소수점 아래 3자리까지 출력
 result = f1_score(y_true, y_pred)
-# print(round(result, 3)) # 0.993
+# print(round(result, 3)) # 0.986
