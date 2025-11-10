@@ -57,11 +57,14 @@ df = df.dropna()
 # print(df.isna().sum().to_frame().T)
 
 # species가 'Chinstrap'이면서 flipper_length_mm이 40% 분위수 이상인 펭권들만 필터링
-df = df[(df['species']=='Chinstrap') * (df['flipper_length_mm'] >= df['flipper_length_mm'].quantile(0.4))].copy()
-# print(df.shape) #  (43, 7)
+flipper = df['flipper_length_mm']
+cond = (df['species']=='Chinstrap') & (flipper >= flipper.quantile(0.4))
+df = df[cond].copy()
+# print(df.shape)
 
 # 위에서 필터링된 데이터에서 bill_depth_mm이 해당 그룹의 중앙값보다 큰 개체의 수를 출력
-# print(len(df[df['bill_length_mm'] > df['bill_length_mm'].median()])) # 20
+s = df['bill_depth_mm'].copy()
+# print(sum(s > s.median())) # 18
 
 # 2-4) 다이아몬드 컷 등급별 특성 비교
 # 다이아몬드의 cut 등급에 따라 가격과 깊이(depth) 특성이 달라집니다. 
@@ -147,7 +150,7 @@ x_train, x_test, y_train, y_test = temp
 # 파이프라인 모델사전
 models = {
     "Logistic": Pipeline([
-        ("scaler", StandardScaler()), ("model", LogisticRegression(max_iter=100, tol=0.05, random_state=123))
+        ("scaler", StandardScaler()), ("model", LogisticRegression(max_iter=2500, random_state=123))
     ]),
     "DecisionTree": Pipeline([
         ("model", DecisionTreeClassifier(max_depth=3, random_state=123))
