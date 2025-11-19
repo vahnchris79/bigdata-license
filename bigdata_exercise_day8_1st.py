@@ -67,12 +67,11 @@ df = pd.read_csv(path2 + "event_log_05.csv")
 df['date'] = df['date'].astype('datetime64[ns]')
 df['year'] = df['date'].dt.year
 df['month'] = df['date'].dt.month
-df2 = df.groupby(['category2','year','month'], as_index=False)['value'].sum()
+s = df.groupby(['category2','year','month'])['value'].sum()
+# print(s)
 # 이후, (category2, year)별로 집계된 값 중 가장 value 합계가 높은 월을 선택하시오.
-# print(df2.groupby(['category2','year'])['month'].nlargest())
-
 # 이렇게 선택된 월별 최댓값들을 모두 더한 뒤, 그 합계를 반올림하여 정수로 출력하시오.
-
+# print(round(s.unstack().max(axis=1).sum())) # 7605
 
 # 8-4) 이상 감지 및 성능 분석
 # 시스템 비활성 이벤트의 이상 감지 및 성능 분석을 위한 과제이다.
@@ -111,12 +110,14 @@ df = pd.read_csv(path2 + "event_log_04.csv")
 # 시간(hour) 정보가 22시부터 02시까지(22:00:00 ~ 02:59:59)인 데이터를 야간 이벤트로 간주
 df['datetime'] = df['date'] + ' ' + df['time']
 df['datetime'] = df['datetime'].astype('datetime64[ns]')
-df = df[(df['datetime'].dt.hour >= 22) | (df['datetime'].dt.hour < 3)]
+df = df[(df['datetime'].dt.hour >= 22) | (df['datetime'].dt.hour <= 2)]
 # 이 야간 이벤트를 기준으로, (month, event)별 value 평균값을 구하시오.
 df['month'] = df['datetime'].dt.month
-df = df.groupby(['month','event'])['value'].mean()
+s = df.groupby(['month','event'])['value'].mean()
 # 각 월(month)에서 value 평균이 가장 높은 이벤트 유형을 하나씩 선택
-
+s = s.unstack().idxmax(axis=1).value_counts()
+# 그 중 'Start'와 'Stop'이벤트의 빈도 수 합을 정수로 출력
+# print(s['Stop'] + s['Start']) # 7
 
 # 작업형 제2유형
 # Melbourne Housing Dataset 데이터셋
@@ -186,10 +187,10 @@ models = {
         ("model", DecisionTreeRegressor(max_depth=10, random_state=1234))
     ]),
     "RandomForest": Pipeline([
-        ("model", RandomForestRegressor(n_estimators=1000, max_depth=10, random_state=1234))
+        ("model", RandomForestRegressor(n_estimators=2000, max_depth=10, random_state=1234))
     ]),
     "AdaBoost": Pipeline([
-        ("model", AdaBoostRegressor(n_estimators=1000, random_state=1234))
+        ("model", AdaBoostRegressor(n_estimators=2000, random_state=1234))
     ]),
     "GradientBoosting": Pipeline([
         ("model", GradientBoostingRegressor(random_state=1234))
@@ -220,10 +221,12 @@ model = models[res.loc[0, "Model"]]
 y_pred = model.predict(X_submission)
 
 # 제출파일 생성
-pd.DataFrame({'pred': y_pred}).to_csv("result_day8_type2.csv", index=False)
+# pd.DataFrame({'pred': y_pred}).to_csv("result_day8_type2.csv", index=False)
 
 # 결과확인
-temp = pd.read_csv("result_day8_type2.csv")
-print(Y[:len(test)].describe())
-print("=" * 35)
-print(temp['pred'].describe())
+# temp = pd.read_csv("result_day8_type2.csv")
+# print(Y[:len(test)].describe())
+# print("=" * 35)
+# print(temp['pred'].describe())
+
+
