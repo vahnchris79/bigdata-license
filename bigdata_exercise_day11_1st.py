@@ -66,13 +66,14 @@ ratio = len(s[s.values > s.values.mean()]) / len(s)
 df = pd.read_csv(path2 + "crime_data02.csv")
 # print(df.head(3))
 # 1) 각 범죄유형별 연도별 발생건수를 구한다.
-df = df[df['구분']=="발생건수"].drop(columns=['구분']).set_index("연도").T
+df = df[df['구분']=="발생건수"].drop(columns=['구분']).set_index("연도")
 # 2) 1)번의 결과를 사용해 각 범죄유형에 대해, 전체 연도 동안의 평균 발생건수를 계산한다.
-s = df.loc[:, 2014:2020].mean(axis=1)
+s = df.mean()
 # print(s)
 # 3) 각 범죄유형에 대해 평균보다 큰 발생건수를 기록한 연도의 비율을 구한다.
-
+result = (df > s).mean()
 # 4) 3)에서 구한 비율이 0.5 이상인 범죄유형의 개수를 구해 정수로 출력한다.
+# print(sum(result > 0.5)) # 6
 
 # 작업형 제2유형
 # Bank Marketing 데이터셋
@@ -180,5 +181,76 @@ y_pred = model.predict_proba(X_submission)[:, 1]
 import pandas as pd
 from statsmodels.api import OLS
 from statsmodels.stats.anova import anova_lm
+df = pd.read_csv(path3 + "penguins02.csv")
+# print(df['species'].unique())
+formula = 'body_mass_g ~ C(species)'
+model = OLS.from_formula(formula, df).fit()
+result = anova_lm(model)
+# print(result)
+# 11-1) 유의수준 0.05 하에서 가설 검정의 결과를 (채택/기각) 중 하나를 선택하여 입력하시오.
+# print("기각" if result.loc['C(species)', 'PR(>F)'] <= 0.05 else "채택") # 기각
 
+# 11-2) 위의 가설 검정 결과 적어도 한 품종의 body_mass_g 평균이 (같다/다르다) 중 하나를 선택하여 입력하시오.
+# print("다르다" if result.loc['C(species)','PR(>F)'] <= 0.05 else "같다") # 다르다
 
+# 11-3) 오차제곱합, SSE(Sum of Squares Error)을 구하여 입력하시오. (반올림하여 소수점아래 넷째자리까지 계산)
+SSE = result.loc['Residual','sum_sq']
+# print(round(SSE, 4)) # 70069446.8027
+
+# 11-4) 결정계수(R-squared)를 구하여 입력하시오. (반올림하여 소수점아래 넷째자리까지 계산)
+SSR = result.loc['C(species)','sum_sq']
+R2 = SSR / result['sum_sq'].sum()
+# print(round(R2, 4))             # 0.6745
+# print(round(model.rsquared, 4)) # 0.6745
+
+# 11-5) 평균제곱오차(MSE, Mean Squared Error)을 구하여 입력하시오. (반올림하여 소수점아래 셋째자리까지 계산)
+MSE = result.loc['Residual', 'mean_sq']
+# print(round(MSE, 3)) # 212331.657
+
+# 11-6) 평균제곱회귀(MSR, Mean Squared Regression)을 구하여 입력하시오.(반올림하여 소수점아래 넷째자리까지 계산)
+MSR = result.loc['C(species)', 'mean_sq']
+# print(round(MSR, 4)) # 72595109.5566
+
+# 11-7) F-통계량을 구하여 입력하시오. (반올림하여 소수점아래 넷째자리까지 계산)
+F = result.loc['C(species)', 'F']
+# print(round(F, 4)) # 341.8949
+
+# Altman 데이터
+# head_size: 태아의 머리 둘레 측정값
+# fetus    : 태아 ID (범주형 : 1, 2, 3)
+# observer : 측정자 (범주형 : 1, 2, 3, 4)
+
+# 개별 태아에 대해 관측자에 따라 head_size값이 다르게 나타나는가?
+# Two-way ANOVA를 통해 통계적 유의성을 알아 볼 수 있다.
+# $H_0$1: 모든 태아의 평균 head_size는 동일하다.
+# $H_1$1: 적어도 한 태아 집단의 head_size 평균이 다른 집단과 다르다.
+# $H_0$2: 모든 관측자의 평균 측정값은 동일하다.
+# $H_1$2: 적어도 한 명의 관측자의 평균 측정값은 다르다.
+# $H_0$3: 관측자와 태아 간의 효과는 독립적이다.
+# $H_1$3: 관측자와 태아 간의 효과에 상호작용이 있다.
+
+import pandas as pd
+df = pd.read_csv(path3 + "altman.csv")
+# print(df.head(3))
+# 위에 제시된 귀무가설과 대립가설을 검정할 수 있는 분산분석(ANOVA)을 실시하고, 분산분석표를 출력하시오.
+from statsmodels.api import OLS
+from statsmodels.stats.anova import anova_lm
+formula = "head_size ~ C(fetus) * C(observer)"
+model = OLS.from_formula(formula, df).fit()
+result = anova_lm(model)
+# print(result)
+# 11-8) 분산 분석 결과에서 교호작용 항(fetus × observer)에 대한 F-통계량 값을 출력하시오.
+# (반올림하여 소수점아래 둘째자리까지 계산)
+# print(round(result.loc['C(fetus):C(observer)','F'], 2)) # 1.22
+
+# 11-9) 유의수준 0.05하에서 분산 분석 결과에서 관측자와 태아 간의 효과는 (독립적/상호작용) 중 한 가지를 출력하시오.
+# print("상호작용" if result.loc['C(fetus):C(observer)','PR(>F)'] <= 0.05 else "독립적") # 상호작용
+
+# 11-10) 분산분석 결과에서 세 요인(fetus, observer, fetus × observer) 중
+#  가장 유의한 효과를 가지는 요인의 F통계량 값을 출력하시오.
+# (반올림하여 소수점아래 넷째자리까지 계산)
+# print(round(result['F'].max(), 4)) # 2113.1014
+
+# 11-11) MSE를 출력하시오. (반올림하여 소수점아래 넷째자리까지 계산)
+mse = result.loc['Residual', 'mean_sq']
+# print(round(mse, 4)) # 0.0767
