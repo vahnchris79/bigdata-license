@@ -51,7 +51,10 @@ df = pd.read_csv(path2 + "school.csv")
 # print(df.info(3))
 # print(df.head(3))
 # 가) 순유입인원은 (초중고 도내·도외 전입인원의 합) - (초중고 도내·도외 전출인원의 합)으로 계산한다.
-df['순유입인원'] = df.iloc[:, [3,4,7,8,11,12]].sum(axis=1) - df.iloc[:, [1,2,5,6,9,10]].sum(axis=1)
+# df['순유입인원'] = df.iloc[:, [3,4,7,8,11,12]].sum(axis=1) - df.iloc[:, [1,2,5,6,9,10]].sum(axis=1)
+A = df.loc[:, df.columns.str.contains('전입')].sum(axis=1)
+B = df.loc[:, df.columns.str.contains('전출')].sum(axis=1)
+df['순유입인원'] = A - B
 # print(df.head(3))
 # 나) 각년도별로 가장 큰 순유입인원을 가진 지역구의 순유입인원을 구하고 전체 기간의 해당 순유입인원들의 합을 구하여, 정수형으로 출력한다
 # 나)에 대한 설명) # 문제 이해가 어렵다고 하셔서 설명을 추가해 보았습니다.
@@ -66,24 +69,19 @@ result = df.groupby('년도')['순유입인원'].max().sum()
 df = pd.read_csv(path1 + "waste_bags.csv")
 # print(df.head(3), df.shape, sep="\n") # (571, 10)
 # 가) 5L가격 또는 20L가격이 0인 경우는 제외하고 계산한다.
-df = df[df['5L가격'] > 0].copy()
-df = df[df['20L가격'] > 0].copy()
+df = df[(df['5L가격'] > 0) & (df['20L가격'] > 0)].copy()
 # print(df.shape) # (296, 10)
 # 나) '5L가격'과 '20L가격'을 사용하여, 각 행별로 할인율을 계산하시오.
 #    > 할인율 = (5L가격*4 - 20L가격) / (5L가격 * 4)
 df['할인율'] = ((df['5L가격'] * 4) - df['20L가격']) / (df['5L가격'] * 4)
-# print(((df['5L가격'] * 4) - df['20L가격']) / (df['5L가격'] * 4))
-# print(df.head(3))
 # 다) ('시도명', '종량제봉투종류')별로 평균 할인율을 구하시오.
-s = df.groupby(['시도명','종량제봉투종류'], as_index=False)['할인율'].mean().set_index(['시도명','종량제봉투종류'])
-# print(s)
 # 라) 평균 할인율이 가장 높은 '시도명'과 '종량제봉투종류'를 찾으시오.
-# city = s.idxmax()[0][0]
-# bongtu = s.idxmax()[0][1]
-# print(city, bongtu) # 경상남도 재사용규격봉투
+city, bag = df.groupby(['시도명','종량제봉투종류'])['할인율'].mean().idxmax()
+# print(city, bag) # 경상남도 재사용규격봉투
 # 마) 라)에서 찾은 것에 대한 '20L가격'을 A, '5L가격'을 B라고 할 때 A+B의 값을 구해 정수로 출력한다
-# A = df[(df['시도명']==city) & (df['종량제봉투종류']==bongtu)]['20L가격'].values[0]
-# B = df[(df['시도명']==city) & (df['종량제봉투종류']==bongtu)]['5L가격'].values[0]
+cond = (df['시도명'] == city) & (df['종량제봉투종류'] == bag)
+A = df.loc[cond, '20L가격'].iloc[0]
+B = df.loc[cond, '5L가격'].iloc[0]
 # print(int(A+B)) # 900
 
 # 작업형 제2유형
@@ -288,7 +286,22 @@ df['datetime'] = df['datetime'].astype('datetime64[ns]')
 df = df[(df['datetime'].dt.hour >= 22) | (df['datetime'].dt.hour < 3)]
 # - 이 야간 이벤트를 기준으로, (month, event)별 value 평균값을 구하시오.
 df['month'] = df['datetime'].dt.month
-cond = df.groupby(['month','event'], as_index=False)['value'].mean().sort_values('value',ascending=False)
+cond = df.groupby(['month','event'])['value'].mean().unstack()
 # print(cond)
 # - 각 월(month)에서 value 평균이 가장 높은 이벤트 유형을 하나씩 선택하고, 그 중 'Start'와 'Stop'이벤트의 빈도 수 합을 정수로 출력하시오.
+s = cond.idxmax(axis=1).value_counts()
+# print(s)
+# print(s['Start'] + s['Stop']) # 7
 
+# 19-7) 상관계수 구하기
+# 다음 데이터셋을 사용해 'mpg'변수와 상관관계가 가장 높은 변수 명을 A라고 할 때, 
+# A와 'mpg'와 A의 상관계수를 공백으로 구분하여 한 개 행에 출력하시오.
+# - (상관계수는 반올림하여 소수점아래 3자리까지 계산)
+df = pd.read_csv(path1 + "mpg.csv")
+# print(df.info())
+df = df.select_dtypes(exclude='object')
+# print(df)
+corr_mpg = df.corr('pearson')['mpg'].drop('mpg')
+# print(corr_mpg)
+A = corr_mpg.abs().idxmax()
+# print(A, round(corr_mpg[A], 3)) # weight -0.832
