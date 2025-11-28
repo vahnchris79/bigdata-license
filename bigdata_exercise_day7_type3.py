@@ -60,8 +60,11 @@ from sklearn.metrics import accuracy_score
 y_true = test['gender']
 y_pred = model.predict(test).round().astype(int)
 acc = accuracy_score(y_true, y_pred)
-result6 = round(1-acc, 3)
-# print(result6) # 0.033
+# result6 = round(1-acc, 3)
+proba = model.predict(test)
+y_pred = round(proba)
+result6 = round((test['gender'] != y_pred).mean(), 3)
+print(result6) # 0.033
 
 # 7회 2번. 다중 선형 회귀
 # 여러 개의 독립변수를 기반으로 target 값을 예측하기 위해 다중 선형 회귀모형을 구축하시오.
